@@ -1,0 +1,26 @@
+# System and Editor files
+.DS_Store
+.vscode/
+
+# Python cache and bytecode files
+__pycache__/
+*.py[cod]
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Specific project directories
+ml-1m/*
+!ml-1m/*/
+
+lastfm-1k/*
+!lastfm-1k/*/
+
+coco/*
+!coco/*/
+
+goodreads/*
+!goodreads/*/
+!goodreads/goodreads_processing.py
+
+temp/
