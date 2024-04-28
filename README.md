@@ -50,6 +50,13 @@ For access to the following datasets, please refer to their respective links:
 - [COCO](https://link.springer.com/chapter/10.1007/978-3-319-77712-2_133)
 - [Goodreads - Young Adult](https://mengtingwan.github.io/data/goodreads.html#news)
 
+## Installation
+
+To set up the project environment and install the necessary dependencies, run the following command:
+
+```bash
+poetry install --no-root
+
 ## Acknowledgements
 If you utilize any part of this code for your research, please consider giving a star to this repository and citing our work:
 
