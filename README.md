@@ -46,8 +46,7 @@ Exposure metrics:
 ## Datasets
 For access to the following datasets, please refer to their respective links:
 - [Movielens 1M](https://grouplens.org/datasets/movielens/)
-- [Lastfm 1K](http://ocelma.net/MusicRecommendationDataset/)
-- [Lastfm 1K - Genres](https://www.sciencedirect.com/science/article/abs/pii/S0306457322003090)
+- [Lastfm 1K](http://ocelma.net/MusicRecommendationDataset/) (for the music genre of the artists, refer to [this](https://www.sciencedirect.com/science/article/abs/pii/S0306457322003090) paper)
 - [COCO](https://link.springer.com/chapter/10.1007/978-3-319-77712-2_133)
 - [Goodreads - Young Adult](https://mengtingwan.github.io/data/goodreads.html#news)
 
