@@ -1,7 +1,7 @@
 
 # Optimizing Neighborhoods for Fair Top-N Recommendation
 
-## Abstract
+## Paper's Abstract
 This paper addresses demographic bias in *neighborhood-learning* models for collaborative filtering recommendations. Despite their superior ranking performance, these methods can learn neighborhoods that inadvertently foster discriminatory patterns. There is limited research in this area, highlighting an important research gap. A notable yet solitary effort, *Balanced Neighborhood Sparse Linear Method (BNSLIM)*, aims at balancing neighborhood influence across different demographic groups. However, BNSLIM is hampered by computational inefficiency, and its rigid balancing approach often impacts accuracy. In that vein, we introduce two novel algorithms.
 
 The first, an enhancement of BNSLIM, incorporates the *Alternating Direction Method of Multipliers (ADMM)* to optimize all similarities concurrently, greatly reducing training time.
@@ -42,6 +42,14 @@ Exposure metrics:
 - **RSP** (Zhu, Ziwei, Wang, Jianling, Caverlee, James, SIGIR 2020)
 - **DP** (Chen, Lei, et al., WWW 2023)
 - **BDV** (Eleftherakis, Stavroula, Koutrika, Georgia, Amer-Yahia, Sihem, UMAP 2024)
+
+## Datasets
+For access to the following datasets, please refer to their respective links:
+- [Movielens 1M](https://grouplens.org/datasets/movielens/)
+- [Lastfm 1K](http://ocelma.net/MusicRecommendationDataset/)
+- [Lastfm 1K - Genres](https://www.sciencedirect.com/science/article/abs/pii/S0306457322003090)
+- [COCO](https://link.springer.com/chapter/10.1007/978-3-319-77712-2_133)
+- [Goodreads - Young Adult](https://mengtingwan.github.io/data/goodreads.html#news)
 
 ## Acknowledgements
 If you utilize any part of this code for your research, please consider giving a star to this repository and citing our work:
