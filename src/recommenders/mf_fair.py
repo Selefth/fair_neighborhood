@@ -140,10 +140,11 @@ class FairMF:
             if self.patience_counter >= self.patience:
                 break
         
-    def _compute_loss(self, true_scores, pred_scores, group_indicator) -> torch.FloatTensor:
+    def _compute_loss(self, true_scores, pred_scores, group_indicator,
+                      user_embeddings=None, item_embeddings=None) -> torch.FloatTensor:
         """
-        Computes the combined loss which is a sum of the mean squared error (MSE)
-        and the L2 regularization term.
+        Computes unmasked MSE, L2 regularization, and non-parity loss.
+        Optional embeddings allow the same objective to be used for unseen users.
         --------
         Args:
             true_scores (torch.Tensor): A 2D tensor containing the true rating scores.
@@ -153,9 +154,13 @@ class FairMF:
         Returns:
             torch.Tensor: The combined loss value as a scalar tensor.
         """
+        if user_embeddings is None:
+            user_embeddings = self.model_.user_embedding.weight
+        if item_embeddings is None:
+            item_embeddings = self.model_.item_embedding.weight
         mse_loss = F.mse_loss(pred_scores, true_scores, reduction='sum') / true_scores.numel()
-        l2_penalty = self.l2_lambda * (self.model_.user_embedding.weight.norm(2)**2 + 
-                                       self.model_.item_embedding.weight.norm(2)**2) / 2
+        l2_penalty = self.l2_lambda * (user_embeddings.norm(2)**2 +
+                                       item_embeddings.norm(2)**2) / 2
         fairness_loss = self._nonparity_unfairness(pred_scores, group_indicator)
 
         return mse_loss + l2_penalty + fairness_loss
@@ -174,9 +179,85 @@ class FairMF:
         avg_score_2 = pred_scores[group_indicator == group2].mean()
         return F.smooth_l1_loss(avg_score_1, avg_score_2)
     
+    def predict_new_users(self, X: csr_matrix, sst_field: torch.Tensor) -> csr_matrix:
+        """Infer new user factors from input interactions, keeping item factors fixed.
+
+        Use this for strong generalization. Rows of X are local to this call;
+        they are never used as IDs in the fitted user embedding table. Columns
+        must retain the training item order. sst_field must align with X after
+        any row filtering. Only input interactions belong in X, never held-out
+        validation/test targets.
+
+        Inference uses the existing unmasked MSE + L2 + non-parity objective
+        and the configured learning rate, epoch limit, and stopping settings.
+        Zero initialization makes new factors independent of row IDs and RNG
+        state. The fitted model and its training statistics are not modified.
+        Empty user histories receive zero scores. Seen-item exclusion remains
+        the caller's responsibility, as with predict().
+        """
+        if not hasattr(self, "model_"):
+            raise ValueError("Fit FairMF before inferring new users.")
+        X = X.tocsr()
+        if X.shape[1] != self.model_.num_items:
+            raise ValueError("X must have the fitted item columns in training order.")
+        if tuple(sst_field.shape) != X.shape:
+            raise ValueError("sst_field must have the same shape and row order as X.")
+
+        self.inference_epochs_ = 0
+        self.inference_steps_ = 0
+        active_users = np.flatnonzero(X.getnnz(axis=1))
+        if not len(active_users):
+            return csr_matrix(X.shape, dtype=np.float32)
+
+        # Detaching prevents inference gradients from reaching the fitted model.
+        item_embeddings = self.model_.item_embedding.weight.detach()
+        user_embeddings = nn.Parameter(item_embeddings.new_zeros(
+            (X.shape[0], self.num_factors)))
+        optimizer = optim.Adam([user_embeddings], lr=self.learning_rate)
+        sst_field = sst_field.to(self.device)
+        best_loss = float('inf')
+        patience_counter = 0
+
+        for _ in range(self.max_epochs):
+            losses = []
+            for start in range(0, len(active_users), self.batch_size):
+                rows = active_users[start:start + self.batch_size]
+                users = torch.as_tensor(rows, dtype=torch.long, device=self.device)
+                expected_scores = torch.as_tensor(
+                    X[rows].toarray(), dtype=item_embeddings.dtype, device=self.device)
+                optimizer.zero_grad()
+                scores = user_embeddings[users].matmul(item_embeddings.T)
+                loss = self._compute_loss(
+                    expected_scores, scores, sst_field[users],
+                    user_embeddings=user_embeddings, item_embeddings=item_embeddings)
+                loss.backward()
+                optimizer.step()
+                losses.append(loss.item())
+                self.inference_steps_ += 1
+
+            current_loss = np.mean(losses)
+            self.inference_epochs_ += 1
+            if best_loss - current_loss > self.min_delta:
+                best_loss = current_loss
+                patience_counter = 0
+            else:
+                patience_counter += 1
+            if patience_counter >= self.patience:
+                break
+
+        predictions = lil_matrix(X.shape, dtype=np.float32)
+        with torch.no_grad():
+            for start in range(0, len(active_users), self.batch_size):
+                rows = active_users[start:start + self.batch_size]
+                users = torch.as_tensor(rows, dtype=torch.long, device=self.device)
+                scores = user_embeddings[users].matmul(item_embeddings.T)
+                predictions[rows] = scores.cpu().numpy()
+        return predictions.tocsr()
+
     def predict(self, X: csr_matrix) -> csr_matrix:
         """
-        Predicts the rating scores for all users in the given user-item interaction matrix.
+        Predicts scores for known users, preserving the original training row IDs.
+        For unseen or reindexed users, use predict_new_users() instead.
         --------
         Args:
             X (csr_matrix): The user-item interaction matrix, with shape (num_users, num_items).

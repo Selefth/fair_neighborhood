@@ -9,6 +9,41 @@ Official implementation of our UMAP 2024 paper: **Optimizing Neighborhoods for F
 ## Repository Content
 This repository contains all the code used for our experiments. The `src` folder includes helper functions, covering data processing functions and metrics, and all the models used in our experiments. Additionally, the `notebooks` folder contains a notebook for each experiment, along with a notebook that summarizes the outcomes of all experiments.
 
+
+### File locations
+
+```text
+data/
+  ml-1m/                 # ratings and metadata
+  lastfm-1k/             # plays, profiles, and genre metadata
+  coco/                  # COCO.csv
+  goodreads/             # raw and preprocessed Goodreads JSON files
+results/
+  ml-1m/<seed>/
+  lastfm-1k/<seed>/
+  coco/all/<seed>/
+  goodreads/<seed>/
+scripts/
+  goodreads_processing.py
+```
+
+Dataset files and preprocessing artifacts belong in `data/` and are excluded
+from Git. Each experiment writes `opt_params.json`, `results.json`, and any
+saved model checkpoints to its directory under `results/`. The entire
+`results/` directory is local and ignored by Git. Saved metrics, tuned
+parameters, and checkpoints are not distributed; the notebooks regenerate them.
+
+Run notebooks from anywhere inside this repository. Their setup cell finds the
+project root, including when launched in `notebooks/`, and can be rerun safely.
+`notebooks/results.ipynb` reads the saved runs under `results/`.
+
+The Goodreads preprocessing script resolves its input and output files under
+`data/goodreads/`, independently of the current working directory:
+
+```sh
+python scripts/goodreads_processing.py
+```
+
 Recommendation models:
 - **EASE** (Steck, Harald, WWW 2019)
 - **SLIM ADMM** (Steck, Harald, et al., WSDM 2020)
@@ -49,6 +84,51 @@ To set up the project environment and install the necessary dependencies, run th
 ```bash
 poetry install --no-root
 ```
+
+## Reproducing the experiments
+
+1. Install the environment using the command above and select that environment
+   as the notebook kernel.
+2. Obtain the datasets from the links above and place the inputs as follows:
+
+   | Directory | Required notebook inputs |
+   | --- | --- |
+   | `data/ml-1m/` | `ratings.dat`, `movies.dat`, `users.dat` |
+   | `data/lastfm-1k/` | `userid-timestamp-artid-artname-traid-traname.tsv`, `userid-profile.tsv`, `lastfm1k_artists_mbid.pkl`, `lastfm1k_genres_filtered_final.pkl` |
+   | `data/coco/` | `COCO.csv` |
+   | `data/goodreads/` | `goodreads_filtered_interactions_young_adult.json`, `goodreads_books_young_adult_authors.json` |
+
+   The LastFM genre pickle files are additional metadata, not part of the
+   standard LastFM download; the notebooks require both files. The genre-data
+   reference is linked above. Goodreads preprocessing is in
+   `scripts/goodreads_processing.py`: `collect_authors_metadata()` builds the
+   author metadata from the raw book and author files using Wikidata, and
+   `filter_interactions_by_book_ids()` filters the raw interaction file. The
+   script's default entry point performs only the latter step, so the author
+   metadata must already exist.
+3. Run the appropriate notebook from top to bottom, including hyperparameter
+   tuning before the cells that load `opt_params.json`:
+
+   | Experiment | Notebook | Generated output directory |
+   | --- | --- | --- |
+   | MovieLens C-fairness | `notebooks/ML1M.ipynb` | `results/ml-1m/<seed>/` |
+   | LastFM C-fairness | `notebooks/LFM1K.ipynb` | `results/lastfm-1k/<seed>/` |
+   | COCO P-fairness | `notebooks/Coco_all.ipynb` | `results/coco/all/<seed>/` |
+   | Goodreads P-fairness | `notebooks/Goodreads.ipynb` | `results/goodreads/<seed>/` |
+
+   Repeat with `SEED` set to each of `1452`, `1994`, `42`, `7`, and `13800`.
+   Each notebook contains its preprocessing, split configuration, search space,
+   tuning budget, and evaluation code. Output directories are created
+   automatically. Rerunning a seed overwrites its generated parameters and
+   metrics; retain separate local copies if comparing implementations.
+4. Run `notebooks/results.ipynb`, selecting the desired dataset path, to
+   aggregate the locally generated runs.
+
+The FairMF strong-generalization path now infers unseen user factors from
+input histories with item factors fixed. Its reconstruction loss remains
+unmasked. This corrects the original provider-fairness evaluation; reruns of
+FairMF on COCO and Goodreads should not be expected to reproduce the original
+published FairMF values.
 
 ## Acknowledgements
 If you utilize any part of this code for your research, please consider giving a star ⭐ and citing our work:

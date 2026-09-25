@@ -1,6 +1,9 @@
 
 import requests
 import json
+from pathlib import Path
+
+DATA_DIR = Path(__file__).resolve().parents[1] / "data" / "goodreads"
 
 GENDER_PROPERTY = "P21"  # Property for gender in Wikidata
 OCCUPATION_PROPERTY = "P106"  # Property for occupation in Wikidata
@@ -52,7 +55,7 @@ def get_author_gender(author_name):
 def collect_authors_metadata():
     books_by_author = {}
 
-    with open("goodreads_books_young_adult.json", "r") as books_file:
+    with open(DATA_DIR / "goodreads_books_young_adult.json", "r") as books_file:
         for line in books_file:
             data = json.loads(line)
             if "authors" in data and "book_id" in data and len(data["authors"]) == 1:
@@ -63,8 +66,8 @@ def collect_authors_metadata():
                 else:
                     books_by_author[author_id] = {"book_ids": [book_id]}
 
-    with open("goodreads_books_authors.json", "r") as authors_file, \
-         open("goodreads_books_young_adult_authors.json", "w") as new_file:
+    with open(DATA_DIR / "goodreads_books_authors.json", "r") as authors_file, \
+         open(DATA_DIR / "goodreads_books_young_adult_authors.json", "w") as new_file:
         for line in authors_file:
             data = json.loads(line)
             author_id = data["author_id"]
@@ -81,15 +84,15 @@ def filter_interactions_by_book_ids():
     valid_book_ids = set()
     
     # 1. Collect valid book_ids from goodreads_books_young_adult_authors.json
-    with open("goodreads_books_young_adult_authors.json", "r") as authors_file:
+    with open(DATA_DIR / "goodreads_books_young_adult_authors.json", "r") as authors_file:
         for line in authors_file:
             data = json.loads(line)
             if "book_ids" in data:
                 valid_book_ids.update(data["book_ids"])
                 
     # 2. Filter interactions and write to a new file
-    with open("goodreads_interactions_young_adult.json", "r") as interactions_file, \
-         open("goodreads_filtered_interactions_young_adult.json", "w") as new_file:
+    with open(DATA_DIR / "goodreads_interactions_young_adult.json", "r") as interactions_file, \
+         open(DATA_DIR / "goodreads_filtered_interactions_young_adult.json", "w") as new_file:
         for line in interactions_file:
             interaction_data = json.loads(line)
             if (interaction_data["book_id"] in valid_book_ids and 

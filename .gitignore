@@ -9,18 +9,16 @@ __pycache__/
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
 
-# Specific project directories
-ml-1m/*
-!ml-1m/*/
+# Local datasets and preprocessing artifacts
+/data/*
+!/data/README.md
 
-lastfm-1k/*
-!lastfm-1k/*/
+# Local experiment outputs, tuned parameters, and model checkpoints
+/results/
 
-coco/*
-!coco/*/
+# Internal diagnostic experiment
+/notebooks/Coco_dense.ipynb
 
-goodreads/*
-!goodreads/*/
-!goodreads/goodreads_processing.py
-
+# Local environment and scratch work
+.venv/
 temp/

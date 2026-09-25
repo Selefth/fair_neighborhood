@@ -22,7 +22,6 @@ class mySLIM(ItemSimilarityMatrixAlgorithm):
         Args:
             l1 (float): Sparsity-inducing regularizer.
             l2 (float): Overfitting control regularizer.
-            l3 (float): Balanced regularizer.
             pos (bool): Enforces non-negativity constraints if set to True.
             rho (float): ADMM penalty parameter.
             thr (float): Stopping threshold for convergence.

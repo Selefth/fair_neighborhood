@@ -109,7 +109,7 @@ def get_topn_indices(R_hat, n):
     # keep only the largest n elements of R_hat
     topn_part = R_hat[np.arange(users)[:, np.newaxis], idx_topn_part[:, :n]]
 
-    # find the indeces of the sorted top-n predicted relevance scores in R_hat
+    # find the indices of the sorted top-n predicted relevance scores in R_hat
     idx_part = np.argsort(-topn_part, axis=1)
     idx_topn = idx_topn_part[np.arange(users)[:, np.newaxis], idx_part]
     
