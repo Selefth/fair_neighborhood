@@ -1,6 +1,7 @@
 # System and Editor files
 .DS_Store
-.vscode/
+.vscode/*
+!.vscode/settings.json
 
 # Python cache and bytecode files
 __pycache__/

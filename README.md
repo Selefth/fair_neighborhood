@@ -33,8 +33,10 @@ saved model checkpoints to its directory under `results/`. The entire
 `results/` directory is local and ignored by Git. Saved metrics, tuned
 parameters, and checkpoints are not distributed; the notebooks regenerate them.
 
-Run notebooks from anywhere inside this repository. Their setup cell finds the
-project root, including when launched in `notebooks/`, and can be rerun safely.
+Open the repository root as the VS Code workspace before running a notebook.
+The tracked `.vscode/settings.json` starts notebook kernels in the workspace
+root, so dataset imports and experiment outputs resolve consistently. In other
+Jupyter frontends, start the Jupyter server from the repository root.
 `notebooks/results.ipynb` reads the saved runs under `results/`.
 
 The Goodreads preprocessing script resolves its input and output files under
